@@ -33,6 +33,8 @@ To install this project:
 3. Run `node server.js` in your terminal to start the local web server.
 4. Replace the configured THEOplayer SDK with your own THEOplayer SDK.
 
+The tutorial at [https://youtu.be/AkkJr1ZszJc](https://youtu.be/AkkJr1ZszJc) talks you through the first three steps.
+
 # Usage
 
 Once the installation is complete, and your local web server is running,
