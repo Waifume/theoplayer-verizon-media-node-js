@@ -1,0 +1,157 @@
+<html>
+<head>
+    <title>Verizon Media stream configuration generator</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.myth.theoplayer.com/55d71743-4924-4d1b-8440-78f9cd103879/ui.css">
+    <script type="text/javascript" src="https://cdn.myth.theoplayer.com/55d71743-4924-4d1b-8440-78f9cd103879/THEOplayer.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Create two equal columns that floats next to each other */
+        .column {
+            float: left;
+            width: 50%;
+            padding: 10px;
+            height: 300px; /* Should be removed. Only for demonstration */
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+<div class="row">
+    <div class="column">
+        <p><strong>What?</strong></p>
+        <p>This tool allows you to generate tokenized Verizon Media Preplay query parameters.
+        This tool is intended for educational and testing purposes.</p>
+        <p><strong>Stream settings?</strong></p>
+        <label>Stream GUID:</label> <input type="text" id="streamId" value=""/><br />
+        <label>Use DRM:</label> <input type="checkbox" id="drm" checked/><br />
+        <label>Stream type:</label> <select id="streamType">
+            <option value="a">Asset</option>
+            <option value="c">Live</option>
+            <option value="e">Event</option>
+        </select><br />
+        <label>Extra query parameters (<a href="https://docs.vdms.com/video/index.html#Develop/Preplayv2.htm" target="_blank">Preplay</a> or <a href="https://docs.vdms.com/video/index.html#Setup/Customizing-Playback.htm" target="_blank">Playback URL</a>):</label> <input type="text" id="extraQueryParams" value="" placeholder="ad=uplynkdummy&timedmeta.schema.ads=omsdk" style="width: 100%;"/><br />
+        <label><i>(If you have selected 'use DRM', but didn't provide rmt or manifest to your extra query parameters,
+            then the back-end will still calculate these parameters based on your user-agent)</i></label>
+        <p><strong>How long should the configuration be valid for?</strong></p>
+        <span id="daysValid">10</span> days: <input id="daysValidSlider" type="range" min="1" max="365" value="10">
+        <p><strong>Only generate a stream configuration or also preview in THEOplayer?</strong></p>
+        <select id="previewType">
+            <option value="theoplayer">Preview configuration in THEOplayer</option>
+            <option value="config">Only generate configuration</option>
+        </select><br />
+        <label><i>"Only generate configuration" is recommended when you are planning to copy-paste the configuration to
+        a different device (e.g. Android app), because otherwise this device would already consume the token.</i></label>
+        <p><strong>Ready?</strong></p>
+        <button id="configureStream">Generate and Preview</button>
+    </div>
+    <div class="column">
+        <div class='theoplayer-container video-js theoplayer-skin vjs-16-9'></div>
+        <textarea id="configPreview" style="width: 100%; height: 150px;"></textarea>
+    </div>
+</div>
+
+<script>
+
+    const element = document.querySelector('.video-js');
+    const player = new THEOplayer.Player(element, {
+        ui: {
+            width: '500px',
+            height: '500px'
+        },
+        libraryLocation: 'https://cdn.myth.theoplayer.com/55d71743-4924-4d1b-8440-78f9cd103879/'
+    });
+
+    const configureButton = document.querySelector("#configureStream");
+    configureButton.addEventListener('click', updateStream);
+
+    function convertBackEndConfigurationToTHEOplayerConfiguration(configuration) {
+        const assetTypes = {'a': 'asset', 'c': 'channel', 'e': 'event'}
+        return {
+            sources: {
+                integration: 'verizon-media',
+                id: configuration.id,
+                preplayParameters: configuration.preplayParameters,
+                assetType: assetTypes[configuration.type],
+                contentProtected: configuration.drm
+            }
+        }
+    }
+
+    function updateStream() {
+
+        const configureStream = function (configuration) {
+            player.source = convertBackEndConfigurationToTHEOplayerConfiguration(configuration);
+        }
+        const id = document.querySelector('#streamId').value;
+        const drm = document.querySelector('#drm').checked;
+        const type = document.querySelector('#streamType').value;
+        const daysValid = document.querySelector('#daysValid').innerText;
+        const extraQueryParams = document.querySelector('#extraQueryParams').value;
+        const xmlhttp = new XMLHttpRequest();
+        const url = '/asset';
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                const data = JSON.parse(this.responseText);
+                const preplayParameters = data.preplayParameters;
+                const configuration = {
+                    preplayParameters: preplayParameters,
+                    id: id,
+                    drm: drm,
+                    type: type
+                }
+                const noPreview = (document.querySelector('#previewType').selectedIndex == 1);
+                const configPreview = document.querySelector("#configPreview");
+                configPreview.value = JSON.stringify(convertBackEndConfigurationToTHEOplayerConfiguration(configuration));
+                if (!noPreview) {
+                    document.querySelector('.theoplayer-container').style.display = "block";
+                    configureStream(configuration);
+                } else {
+                    document.querySelector('.theoplayer-container').style.display = "none";
+                }
+                console.log("Your query string is on the front-end is", getQueryString(preplayParameters));
+            }
+        };
+        xmlhttp.open("POST", url, true);
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify({
+            id: id,
+            drm: drm,
+            type: type,
+            daysValid: daysValid,
+            extraQueryParams: extraQueryParams
+        }));
+    }
+
+    function getQueryString(params) {
+        return Object.keys(params).map(function(key) {
+            return key + '=' + params[key]
+        }).join('&');
+    }
+
+    document.querySelector('#daysValidSlider').addEventListener('change', function(e) {
+        const nbOfDays = e.target.value;
+        document.querySelector('#daysValid').innerText = nbOfDays;
+    });
+
+    document.querySelector('#previewType').addEventListener('change', function(e) {
+       const selectedIndex = e.target.selectedIndex;
+       const loadButton = document.querySelector('#configureStream');
+       if (selectedIndex == 1) {
+           loadButton.innerText = "Generate";
+       } else {
+           loadButton.innerText = "Generate and Preview";
+       }
+    });
+
+</script>
+</body>
+</html>
