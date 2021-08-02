@@ -75,10 +75,11 @@
 
     function convertBackEndConfigurationToTHEOplayerConfiguration(configuration) {
         const assetTypes = {'a': 'asset', 'c': 'channel', 'e': 'event'}
+        const ids = configuration.id.split(",");
         return {
             sources: {
                 integration: 'verizon-media',
-                id: configuration.id,
+                id: ids,
                 preplayParameters: configuration.preplayParameters,
                 assetType: assetTypes[configuration.type],
                 contentProtected: configuration.drm
