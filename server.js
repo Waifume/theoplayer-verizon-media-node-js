@@ -71,17 +71,24 @@ function getPreplayParameters(req, res) {
 
     const useDrm = body.drm;
     if (useDrm) {
-        const source = req.headers['user-agent'],
-            ua = useragent.parse(source);
-        const requiresFairPlay = requiresFairplay(ua);
-        const manifest = (requiresFairPlay) ? "m3u8" : "mpd";
-        const requiresPlayReady = ua.isIE;
-        const rmt = (requiresFairPlay) ? "fps" : (requiresPlayReady ? "pr" : "wv");
-        if (!queryParams['manifest']) {
-            queryParams['manifest'] = manifest;
-        }
-        if (!queryParams['rmt']) {
-            queryParams['rmt'] = rmt;
+        const allowrmt = body.allowrmt;
+        if (!allowrmt) {
+            const source = req.headers['user-agent'],
+                ua = useragent.parse(source);
+            const requiresFairPlay = requiresFairplay(ua);
+            const manifest = (requiresFairPlay) ? "m3u8" : "mpd";
+            const requiresPlayReady = ua.isIE;
+            const rmt = (requiresFairPlay) ? "fps" : (requiresPlayReady ? "pr" : "wv");
+            if (!queryParams['manifest']) {
+                queryParams['manifest'] = manifest;
+            }
+            if (!queryParams['rmt']) {
+                queryParams['rmt'] = rmt;
+            }
+        } else {
+            if (!queryParams['allowrmt']) {
+                queryParams['allowrmt'] = 1;
+            }
         }
     }
     let queryStr = jsonToQueryString(queryParams);

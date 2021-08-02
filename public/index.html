@@ -33,6 +33,7 @@
         <p><strong>Stream settings?</strong></p>
         <label>Stream GUID:</label> <input type="text" id="streamId" value=""/><br />
         <label>Use DRM:</label> <input type="checkbox" id="drm" checked/><br />
+        <label>Use allowrmt=1:</label> <input type="checkbox" id="allowrmt" checked /><br />
         <label>Stream type:</label> <select id="streamType">
             <option value="a">Asset</option>
             <option value="c">Live</option>
@@ -94,6 +95,7 @@
         }
         const id = document.querySelector('#streamId').value;
         const drm = document.querySelector('#drm').checked;
+        const allowrmt = document.querySelector('#allowrmt').checked;
         const type = document.querySelector('#streamType').value;
         const daysValid = document.querySelector('#daysValid').innerText;
         const extraQueryParams = document.querySelector('#extraQueryParams').value;
@@ -126,6 +128,7 @@
         xmlhttp.send(JSON.stringify({
             id: id,
             drm: drm,
+            allowrmt: allowrmt,
             type: type,
             daysValid: daysValid,
             extraQueryParams: extraQueryParams
@@ -151,6 +154,15 @@
        } else {
            loadButton.innerText = "Generate and Preview";
        }
+    });
+
+    document.querySelector('#drm').addEventListener('change', function(e) {
+        const drmChecked = e.target.checked;
+        if (drmChecked) {
+            document.querySelector('#allowrmt').disabled = false;
+        } else {
+            document.querySelector('#allowrmt').disabled = true;
+        }
     });
 
 </script>
