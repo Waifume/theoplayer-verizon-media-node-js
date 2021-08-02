@@ -41,7 +41,16 @@ Once the installation is complete, and your local web server is running,
 go to http://localhost:3000/index.html and test your stream:
 
 1. Enter the asset ID
+    1. You can also enter a comma-separated list of asset IDs (without spaces)
 2. Check DRM if the asset requires DRM
 3. Select the type of asset
 4. Configure (optional) additional settings
 5. Hit the "Generate"-button
+
+# Remarks
+
+* This end-to-end solution uses the `allowrmt=1` query parameter by default when generating the token.
+This parameter absolves the need to do user-agent detection and handling in the back-end.
+In other words, using this parameter means that back-end developers don't need to determine the `rmt` and `manifest` values in the back-end.
+* If you use this tool to generate a source that needs to be played on a different platform (e.g. different browser, Android app, ...),
+then select `Only generate configuration` in the preview. 
