@@ -31,14 +31,22 @@
         <p>This tool allows you to generate tokenized Verizon Media Preplay query parameters.
         This tool is intended for educational and testing purposes.</p>
         <p><strong>Stream settings?</strong></p>
+        <p>A. Do you use a...</p>
         <label>Stream GUID:</label> <input type="text" id="streamId" value=""/><br />
+        <p>B. Or a...</p>
+        <label>User ID:</label> <input type="text" id="userId" value=""/><br />
+        <label>External ID:</label> <input type="text" id="externalId" value="" disabled /><br />
+        <p>Do you need multi-DRM? (Widevine, PlayReady, FairPlay)</p>
         <label>Use DRM:</label> <input type="checkbox" id="drm" checked/><br />
+        <p>Do you want to avoid user-agent detection on your back-end?</p>
         <label>Use allowrmt=1:</label> <input type="checkbox" id="allowrmt" checked /><br />
+        <p>What type of stream do you have?</p>
         <label>Stream type:</label> <select id="streamType">
             <option value="a">Asset</option>
             <option value="c">Live</option>
             <option value="e">Event</option>
         </select><br />
+        <p>What other query parameters do you want to send along?</p>
         <label>Extra query parameters (<a href="https://docs.vdms.com/video/index.html#Develop/Preplayv2.htm" target="_blank">Preplay</a> or <a href="https://docs.vdms.com/video/index.html#Setup/Customizing-Playback.htm" target="_blank">Playback URL</a>):</label> <input type="text" id="extraQueryParams" value="" placeholder="ad=uplynkdummy&timedmeta.schema.ads=omsdk" style="width: 100%;"/><br />
         <label><i>(If you have selected 'use DRM', but didn't provide rmt or manifest to your extra query parameters,
             then the back-end will still calculate these parameters based on your user-agent)</i></label>
@@ -76,7 +84,15 @@
 
     function convertBackEndConfigurationToTHEOplayerConfiguration(configuration) {
         const assetTypes = {'a': 'asset', 'c': 'channel', 'e': 'event'}
-        const ids = configuration.id.split(",");
+        let ids = configuration.id.split(",");
+        const userId = document.querySelector('#userId').value;
+        const externalId = document.querySelector('#externalId').value;
+        if (userId && externalId) {
+            ids = {
+                userId: userId,
+                externalId: externalId.split(",")
+            }
+        }
         return {
             sources: {
                 integration: 'verizon-media',
@@ -94,6 +110,8 @@
             player.source = convertBackEndConfigurationToTHEOplayerConfiguration(configuration);
         }
         const id = document.querySelector('#streamId').value;
+        const userId = document.querySelector('#userId').value;
+        const externalId = document.querySelector('#externalId').value;
         const drm = document.querySelector('#drm').checked;
         const allowrmt = document.querySelector('#allowrmt').checked;
         const type = document.querySelector('#streamType').value;
@@ -127,6 +145,8 @@
         xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xmlhttp.send(JSON.stringify({
             id: id,
+            userId: userId,
+            externalId: externalId,
             drm: drm,
             allowrmt: allowrmt,
             type: type,
@@ -162,6 +182,30 @@
             document.querySelector('#allowrmt').disabled = false;
         } else {
             document.querySelector('#allowrmt').disabled = true;
+        }
+    });
+
+    document.querySelector('#streamId').addEventListener('input', function(e) {
+        if (e.target.value && e.target.value.length > 0) {
+            document.querySelector('#userId').value = "";
+            document.querySelector('#userId').disabled = true;
+            document.querySelector('#externalId').value = "";
+            document.querySelector('#externalId').disabled = true;
+        } else {
+            document.querySelector('#userId').disabled = false;
+            document.querySelector('#externalId').disabled = false;
+        }
+    });
+
+    document.querySelector('#userId').addEventListener('input', function(e) {
+        if (e.target.value && e.target.value.length > 0) {
+            document.querySelector('#streamId').value = "";
+            document.querySelector('#streamId').disabled = true;
+            document.querySelector('#externalId').disabled = false;
+        } else {
+            document.querySelector('#streamId').disabled = false;
+            document.querySelector('#externalId').value = "";
+            document.querySelector('#externalId').disabled = true;
         }
     });
 

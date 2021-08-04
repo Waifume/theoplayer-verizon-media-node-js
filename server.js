@@ -54,8 +54,13 @@ function getPreplayParameters(req, res) {
         tc: '1',
         exp: parseInt(Date.now()/1000)+addTime(parseInt(body.daysValid),0,30,0),
         rn: parseInt(Math.random()*1000000),
-        ct: body.type,
-        cid: body.id
+        ct: body.type
+    };
+    if (body.userId) {
+        queryParams.eid = body.externalId;
+        queryParams.oid = body.userId;
+    } else {
+        queryParams.cid = body.id;
     }
     let extraParams = body.extraQueryParams;
     if (extraParams) {
